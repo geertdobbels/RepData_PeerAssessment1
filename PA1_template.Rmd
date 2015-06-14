@@ -9,17 +9,102 @@ output:
 ## Loading and preprocessing the data
 
 
+```{r}
+activity <-read.csv("activity.csv")
+head(activity)
+summary(activity)
+```
+
+The dataframe "activity" looks OK as it is, so no further preprocessing is necessary
+
+Let's have a quick look at the data as it is:
+
+```{r}
+plot(activity)
+```
+
 
 ## What is mean total number of steps taken per day?
 
+Group data by date and sum the number of steps taken each day.
+Show a histogram of the number of total steps taken each day and calculate the mean and median of the total number of steps taken each day:
+
+```{r}
+suppressMessages(library(dplyr))
+by_date <- group_by(activity,date)
+by_date <- summarise(by_date, steps=sum(steps))
+head(by_date)
+hist(by_date$steps, breaks = 20, col = "lightblue", main = "Steps per day Histogram", xlab = "Steps per day")
+summary(by_date)
+```
 
 
 ## What is the average daily activity pattern?
 
+ake a time series plot of the average of the number of steps taken each 5 minute interval, averaged over all days, and show the 5 minute interval that contains the maximum number of steps on average across all the days in the dataset
+
+```{r}
+by_interval <- group_by(activity, interval)
+by_interval <- summarise(by_interval, steps = mean(steps, na.rm = TRUE))
+head(by_interval)
+
+plot(by_interval, type = "l")
+```
+
+Interval of maximum steps averaged across all days:
+
+```{r}
+filter(by_interval, steps == max(steps))
+```
 
 
 ## Imputing missing values
 
+Number of missing values in this file : `r sum(is.na(activity$steps)) ` (this is calculated with R inline code sum(is.na(activity$steps)))
+
+The NA values will be replaced by the mean number of steps per day in the same interval.  This mean value has already been calculated in the dataframe "by_interval" which is now used to find the imputed value for the NA's.
+
+The dataset with the filled in NA's is called "na_imputed"
+
+```{r}
+na_imputed <- activity
+na_imputed$steps <- ifelse(is.na(na_imputed$steps), by_interval$steps[match(na_imputed$interval, by_interval$interval)], na_imputed$steps)
+head(na_imputed)
+```
+
+Histogram of the total number of steps taken each day, now with NA's imputed (first we have to regroup the imputed dataset by day):
+
+```{r}
+by_date_imp <- group_by(na_imputed,date)
+by_date_imp <- summarise(by_date_imp, steps=sum(steps))
+head(by_date_imp)
+hist(by_date_imp$steps, breaks = 20, col = "lightgreen", main = "Steps per day Histogram with imputed NA values", xlab = "Steps per day")
+```
+
+The mean and median are given in the summary:
+
+```{r}
+summary(by_date_imp)
+```
+
+The impact of imputing missing data on the estimates of the total daily number of steps can be shown comparing the mean, median and histograms of both datasets:
+
+The mean of the raw data is `r mean(by_date$steps,na.rm=TRUE)` while the mean of the imputed dataset is `r mean(by_date_imp$steps)`
+
+The median of the raw data is `r median(by_date$steps,na.rm=TRUE)` and the median of the imputed dataset is  `r median(by_date_imp$steps)`
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+library(ggplot2)
+wkday <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+na_imputed$daytype <- as.factor(ifelse(is.element(weekdays(as.Date(na_imputed$date)), wkday), "Weekday", "Weekend"))
+by_interval_and_daytype <- group_by(na_imputed, daytype, interval)
+by_interval_and_daytype <- summarise(by_interval_and_daytype, steps = mean(steps))
+head(by_interval_and_daytype)
+qplot(interval, steps, data=by_interval_and_daytype, geom ="line", colour = daytype)
+```
+
+It looks as if activities start earlier during weekdays and reach a higher peak in the morning, while overal activity during daytime seems to be higher on weekends.
+
