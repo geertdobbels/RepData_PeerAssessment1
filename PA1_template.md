@@ -1,4 +1,6 @@
 # Reproducible Research: Peer Assessment 1
+Geert  
+September 09, 2015  
 
 
 ## Loading and preprocessing the data

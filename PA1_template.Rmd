@@ -1,8 +1,10 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
+title: 'Reproducible Research: Peer Assessment 1'
+author: "Geert"
+date: "September 09, 2015"
+output:
   html_document:
-    keep_md: true
+    keep_md: yes
 ---
 
 
